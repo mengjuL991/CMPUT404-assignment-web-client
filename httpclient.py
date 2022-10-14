@@ -142,7 +142,7 @@ class HTTPClient(object):
 
         # length of argument
         argument_length = str(len(arguments))
-        request = 'POST ' + path + ' HTTP/1.1\r\nHost: ' + host_name + '\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: ' + argument_length + '\r\nConnection: close\r\n\r\n' + arguments
+        request = 'POST ' + path + ' HTTP/1.1\r\nHost: ' + host_name + '\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: ' + argument_length + '\r\nConnection: closed\r\n\r\n' + arguments
         
         self.sendall(request)
 
