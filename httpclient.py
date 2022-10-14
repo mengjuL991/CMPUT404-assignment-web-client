@@ -134,7 +134,7 @@ class HTTPClient(object):
 
         self.connect(host_name, port_number)
 
-        # Set path if its none
+        # Set path = '/' if it is none
         if not parsed_url.path:
             path = '/'
         else:
