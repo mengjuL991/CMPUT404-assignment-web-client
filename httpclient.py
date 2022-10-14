@@ -40,14 +40,20 @@ class HTTPClient(object):
         self.socket.connect((host, port))
         return None
 
+    # get status code
     def get_code(self, data):
-        return None
+        code = int(data.split('\r\n')[0].split(' ')[1])
+        return code
 
+    # get header
     def get_headers(self,data):
-        return None
+        response = data.split('\r\n\r\n')[0]
+        return response
 
+    # get body information
     def get_body(self, data):
-        return None
+        body = data.split('\r\n\r\n')[1]
+        return body
     
     def sendall(self, data):
         self.socket.sendall(data.encode('utf-8'))
@@ -70,11 +76,83 @@ class HTTPClient(object):
     def GET(self, url, args=None):
         code = 500
         body = ""
+
+        parse_result = urllib.parse.urlparse(url)
+
+        # get host name, port number and scheme name
+        host_name = parse_result.hostname
+        port_number = parse_result.port
+        scheme_name = parse_result.scheme
+
+        # default port is 80
+        if port_number == None and scheme_name == "http":
+            port_number = 80
+        elif port_number == None and scheme_name == "https":
+            port_number = 443
+
+        self.connect(host_name, port_number)
+
+        # if path is none, set '/'
+        if not parse_result.path:
+            path = '/'
+        else:
+            path = parse_result.path
+        
+        request = 'GET ' + path + ' HTTP/1.1\r\nHost: ' + host_name + '\r\nConnection:closed\r\n\r\n'
+
+        self.sendall(request)
+        
+        response = self.recvall(self.socket)
+
+        code = int(self.get_code(response))
+        body = self.get_body(response)
+
+        self.close()
+
         return HTTPResponse(code, body)
 
     def POST(self, url, args=None):
         code = 500
         body = ""
+        parsed_url = urllib.parse.urlparse(url)
+
+        host_name = parsed_url.hostname
+        port_number = parsed_url.port
+        scheme_name = parsed_url.scheme
+        
+        # default port is 80
+        if port_number == None and scheme_name == 'http':
+            port_number = 80
+        elif port_number == None and scheme_name == 'https':
+            port_number = 443
+
+        # check whether args is none
+        if args == None:
+            arguments = urllib.parse.urlencode('')
+        else:
+            arguments = urllib.parse.urlencode(args)
+
+        self.connect(host_name, port_number)
+
+        # Set path if its none
+        if not parsed_url.path:
+            path = '/'
+        else:
+            path = parsed_url.path
+
+        # length of argument
+        argument_length = str(len(arguments))
+        request = 'POST ' + path + ' HTTP/1.1\r\nHost: ' + host_name + '\r\nContent-Type:application/x-www-form-urlencoded\r\nContent-Length: ' + argument_length + '\r\nConnection: close\r\n\r\n' + arguments
+        
+        self.sendall(request)
+
+        response = self.recvall(self.socket)
+
+        code = self.get_code(response)
+        body = self.get_body(response)
+
+        self.close()
+
         return HTTPResponse(code, body)
 
     def command(self, url, command="GET", args=None):
